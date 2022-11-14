@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8"/>
+	<title>Financial Tracker - Assignment 3</title>
+	<link rel="stylesheet" type="text/css" href="css/font-awesome.min.css">
+	<link rel="stylesheet" type="text/css" href="css/main.css">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/cerulean/bootstrap.min.css" integrity="sha384-3fdgwJw17Bi87e1QQ4fsLn4rUFqWw//KU0g8TvV6quvahISRewev6/EocKNuJmEw" crossorigin="anonymous">
+</head>
+<body>
+	
+	<section class="wrapper">
+		<div id="MyClockDisplay" class="clock" onload="showTime()"></div>
+		<h1>Transaction Tracker</h1>
+		<form class="frm-transactions">
+			<fieldset>
+				
+				<legend>Add Transaction</legend>
+				<div class="frm-group">
+					<input class="frm-control" type="text" name="description" size="30" placeholder="description" />
+				</div>
+				<div class="frm-group">
+					<select class="frm-control" name="type">
+						<option value="">type</option>
+						<option value="debit">debit</option>
+						<option value="credit">credit</option>
+					</select>
+				</div>
+				<div class="frm-group">
+					<i class="edit fa fa-dollar"></i>
+					<input class="frm-control" type="number" name="currency" min="0" max="9999" step="0.01" size="4" placeholder="0.00" />
+				</div>
+				<div class="frm-group">
+					<input class="frm-control btn btn-info" type="submit" value="add" />
+				</div>
+				<div class="error hide">Fields cannot be empty!</div>
+			</fieldset>
+		</form>
+		<h2>Transactions</h2>
+		<table class="transactions">
+			<thead>
+				<tr>
+					<td colspan="4" class="right">
+						<span class="badge bg-primary db-badge">Total debits: <span class="total debits">$0.00</span></span>
+						<span class="badge bg-primary cr-badge">Total credits: <span class="total credits">$0.00</span></span>
+					</td>
+				</tr>
+				<tr>
+					<th>Description</th>
+					<th>Type</th>
+					<th class="amount">Amount</th>
+					<th class="tools">Tools</th>
+				</tr>
+			</thead>
+			<tbody>
+			<!-- SAMPLE MARKUP FOR TRANSACTIONS
+			<table>
+				<tr class="debit">
+					<td>Tim Horton's</td>
+					<td>debit</td>
+					<td class="amount">$1.89</td>
+					<td class="tools">
+						<i class="delete fa fa-trash-o"></i>
+					</td>
+				</tr>
+			</table>
+			<table>
+				<tr class="debit">
+					<td>NAIT Bookstore - JavaScript book</td>
+					<td>debit</td>
+					<td class="amount">$28.47</td>
+					<td class="tools">
+						<i class="delete fa fa-trash-o"></i>
+					</td>
+				</tr>
+			</table>
+			<table>
+				<tr class="credit">
+					<td>Payday</td>
+					<td>credit</td>
+					<td class="amount">$1223.98</td>
+					<td class="tools">
+						<i class="delete fa fa-trash-o"></i>
+					</td>
+				</tr>
+			</table>
+			<table>
+				<tr class="debit">
+					<td>Rent</td>
+					<td>debit</td>
+					<td class="amount">$750.00</td>
+					<td class="tools">
+						<i class="delete fa fa-trash-o"></i>
+					</td>
+				</tr>
+			</table>
+				-->
+			</tbody>
+		</table>
+	</section>
+	<script src="js/main.js"></script>
+</body>
+</html>
