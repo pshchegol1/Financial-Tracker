@@ -9,95 +9,81 @@
 </head>
 <body>
 	
-	<section class="wrapper">
-		<div id="MyClockDisplay" class="clock" onload="showTime()"></div>
-		<h1>Transaction Tracker</h1>
-		<form class="frm-transactions">
-			<fieldset>
-				
-				<legend>Add Transaction</legend>
-				<div class="frm-group">
-					<input class="frm-control" type="text" name="description" size="30" placeholder="description" />
+	<section class="container py-5">
+		<div id="MyClockDisplay" class="clock mb-4" onload="showTime()"></div>
+		<h1 class="mb-4 text-center">Transaction Tracker</h1>
+		<form class="frm-transactions card shadow-sm mb-4 p-4 bg-light">
+			<h4 class="mb-3">Add Transaction</h4>
+			<div class="alert alert-danger d-none error" role="alert">
+				Fields cannot be empty!
+			</div>
+			<div class="form-row">
+				<div class="form-group col-md-5 mb-3">
+					<input class="form-control" type="text" name="description" placeholder="Description" />
 				</div>
-				<div class="frm-group">
-					<select class="frm-control" name="type">
-						<option value="">type</option>
-						<option value="debit">debit</option>
-						<option value="credit">credit</option>
+				<div class="form-group col-md-3 mb-3">
+					<select class="form-control" name="type">
+						<option value="">Type</option>
+						<option value="debit">Debit</option>
+						<option value="credit">Credit</option>
 					</select>
 				</div>
-				<div class="frm-group">
-					<i class="edit fa fa-dollar"></i>
-					<input class="frm-control" type="number" name="currency" min="0" max="9999" step="0.01" size="4" placeholder="0.00" />
+				<div class="form-group col-md-3 mb-3 d-flex align-items-center">
+					<span class="input-group-text bg-white border-0 pr-2"><i class="fa fa-dollar"></i></span>
+					<input class="form-control" type="number" name="currency" min="0" max="9999" step="0.01" placeholder="0.00" />
 				</div>
-				<div class="frm-group">
-					<input class="frm-control btn btn-info" type="submit" value="add" />
+				<div class="form-group col-md-1 mb-3">
+					<input class="btn btn-info w-100" type="submit" value="Add" />
 				</div>
-				<div class="error hide">Fields cannot be empty!</div>
-			</fieldset>
+			</div>
 		</form>
-		<h2>Transactions</h2>
-		<table class="transactions">
-			<thead>
-				<tr>
-					<td colspan="4" class="right">
-						<span class="badge bg-primary db-badge">Total debits: <span class="total debits">$0.00</span></span>
-						<span class="badge bg-primary cr-badge">Total credits: <span class="total credits">$0.00</span></span>
-					</td>
-				</tr>
-				<tr>
-					<th>Description</th>
-					<th>Type</th>
-					<th class="amount">Amount</th>
-					<th class="tools">Tools</th>
-				</tr>
-			</thead>
-			<tbody>
-			<!-- SAMPLE MARKUP FOR TRANSACTIONS
-			<table>
-				<tr class="debit">
-					<td>Tim Horton's</td>
-					<td>debit</td>
-					<td class="amount">$1.89</td>
-					<td class="tools">
-						<i class="delete fa fa-trash-o"></i>
-					</td>
-				</tr>
-			</table>
-			<table>
-				<tr class="debit">
-					<td>NAIT Bookstore - JavaScript book</td>
-					<td>debit</td>
-					<td class="amount">$28.47</td>
-					<td class="tools">
-						<i class="delete fa fa-trash-o"></i>
-					</td>
-				</tr>
-			</table>
-			<table>
-				<tr class="credit">
-					<td>Payday</td>
-					<td>credit</td>
-					<td class="amount">$1223.98</td>
-					<td class="tools">
-						<i class="delete fa fa-trash-o"></i>
-					</td>
-				</tr>
-			</table>
-			<table>
-				<tr class="debit">
-					<td>Rent</td>
-					<td>debit</td>
-					<td class="amount">$750.00</td>
-					<td class="tools">
-						<i class="delete fa fa-trash-o"></i>
-					</td>
-				</tr>
-			</table>
-				-->
-			</tbody>
-		</table>
+		<div class="card shadow-sm">
+			<div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+				<span>Total debits: <span class="badge badge-light total debits">$0.00</span></span>
+				<span>Total credits: <span class="badge badge-light total credits">$0.00</span></span>
+			</div>
+			<div class="card-body p-0">
+				<table class="table table-hover table-striped table-bordered mb-0 transactions">
+					<thead class="thead-dark">
+						<tr>
+							<th>Description</th>
+							<th>Type</th>
+							<th class="amount">Amount</th>
+							<th class="tools">Tools</th>
+						</tr>
+					</thead>
+					<tbody>
+						<!-- Transactions will be injected here -->
+					</tbody>
+				</table>
+			</div>
+		</div>
 	</section>
-	<script src="js/main.js"></script>
+</section>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-warning">
+				<h5 class="modal-title" id="deleteConfirmModalLabel"><i class="fa fa-exclamation-triangle text-danger mr-2"></i>Confirm Deletion</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				Are you sure you want to delete this transaction?
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" id="cancelDeleteBtn" data-dismiss="modal">No</button>
+				<button type="button" class="btn btn-danger" id="confirmDeleteBtn">Yes</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script src="js/main.js"></script>
 </body>
 </html>

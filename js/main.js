@@ -6,171 +6,170 @@ window.addEventListener('load',function(e)
     const form = document.querySelector('form');
     const error = document.querySelector('.error');
     
-    console.log(form,error);
-    
-      /*==============FOCUS========== */
-    const d = document.querySelector('.frm-control');
-    d.addEventListener('focus',onFocus)
-      /*============================= */
+    // Focus effect for first input
+    const firstInput = form.querySelector('input[name="description"]');
+    firstInput.addEventListener('focus', onFocus);
 
       //Submit Event
-    form.addEventListener('submit',function(e)
-    {
-        const description = e.currentTarget.elements.description.value;
-        const type = e.currentTarget.elements.type.value;
-        const amount =  e.currentTarget.elements.currency.value;
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const description = e.currentTarget.elements.description.value.trim();
+      const type = e.currentTarget.elements.type.value;
+      const amount = e.currentTarget.elements.currency.value;
 
-        // //? Clear Input Fields Selector First option
-        // const inputs =  document.querySelectorAll('[name="description"], [name="type"], [name="currency"]');
-      
-        // console.log(description,type,amount);
-        // inputs.forEach(input => {
-        //   input.value = '';
-        // });
+      //Data Object
+      const transaction = {
+        description,
+        type,
+        amount,
+        key: Date.now()
+      };
 
-        //? Second Option to clear all input fields after submit : form.reset();
-
-        //Data Object
-        const transaction = 
-        {
-          description,
-          type,
-          amount,
-          key: Date.now()
-          
-        };
-        /*==============VALIDATION========== */
-
-        let valDescription = description;
-        let valType = type;
-        let valAmount = amount;
-
-        if(valDescription !== "" && valType !== "" && valAmount !== "" && valAmount !== '0' && valType !== 'type')
-        {
-            console.log('Success!');
-            error.classList.add("hide");
-            newTransaction(transaction)
-            updateTotalsDebit()
-
-
-            
-            
-            
-        }
-        else
-        {
-            console.log('Fail!');
-            error.classList.remove('hide');
-        }
-        /*======END OF==VALIDATION========== */
-      
-        e.preventDefault();
+      // Validation
+      if (description !== "" && type !== "" && amount !== "" && amount !== '0' && type !== 'type') {
+        error.classList.add("d-none");
+        newTransaction(transaction);
+        updateTotalsDebit();
         form.reset();
+      } else {
+        error.classList.remove('d-none');
+        error.classList.add('show');
+      }
+    });
 
 
-        
-        
-    })//END OF SUBMIT EVENT
-
-
-    function onFocus(e) 
-    {
-        
-        error.classList.add("hide");
-        /* e.currentTarget.removeEventListener("click", onFocus); */
+    function onFocus(e) {
+      error.classList.add("d-none");
+      error.classList.remove('show');
     }
 
     // Add New Transaction To the DOM
     //Template 
-   function newTransaction(transaction)
-   {
+    // Modal state for delete
+    let pendingDelete = null;
+
+    function newTransaction(transaction) {
       const newTransactions = document.querySelector('.transactions tbody');
-      const template  = 
-      `
-        <table class="transaction">
-            <tr class="${transaction.type}">
-              <td>${transaction.description}</td>
-              <td>${transaction.type}</td>
-              <td class="amount">${transaction.amount}</td>
-              <td class="tools">
-                <i class="delete fa fa-trash-o" data-key="${transaction.key}"></i>
-              </td>
-            </tr>
-        </table> 
-      `
+      const template = `
+        <tr class="${transaction.type} animate__animated animate__fadeIn">
+          <td>${transaction.description}</td>
+          <td><span class="badge badge-${transaction.type === 'debit' ? 'danger' : 'success'} text-uppercase">${transaction.type}</span></td>
+          <td class="amount">$${parseFloat(transaction.amount).toFixed(2)}</td>
+          <td class="tools">
+            <button type="button" class="btn btn-sm btn-outline-danger delete" data-key="${transaction.key}" title="Delete"><i class="fa fa-trash-o"></i></button>
+          </td>
+        </tr>
+      `;
       const docFragment = document.createRange().createContextualFragment(template);
-      const newTransaction = docFragment.querySelector('tr');
-      const deleteIcon = newTransaction.querySelector('.delete');
-      
-
-      
-
-      dataArray.push(transaction);
-      
-
-/* ==============================REMOVE===================================== */
-      //Remove Event
-      deleteIcon.addEventListener('click',function(e)
-      {
-        console.log(e.currentTarget.dataset.key, transaction.key)
-        //remove action
-        const removeTransaction = dataArray.find(function(item, index)
-        {
-          if(item.key === parseInt(e.currentTarget.dataset.key))
-          {
-            
-            item.index = index;
-            console.log(item);
-            return item
+      const newRow = docFragment.querySelector('tr');
+      if (!newRow) {
+        // Fallback: create row using DOM if template fails
+        const fallbackRow = document.createElement('tr');
+        fallbackRow.className = `${transaction.type} animate__animated animate__fadeIn`;
+        fallbackRow.innerHTML = `
+          <td>${transaction.description}</td>
+          <td><span class="badge badge-${transaction.type === 'debit' ? 'danger' : 'success'} text-uppercase">${transaction.type}</span></td>
+          <td class="amount">$${parseFloat(transaction.amount).toFixed(2)}</td>
+          <td class="tools">
+            <button type="button" class="btn btn-sm btn-outline-danger delete" data-key="${transaction.key}" title="Delete"><i class="fa fa-trash-o"></i></button>
+          </td>
+        `;
+        dataArray.push(transaction);
+        const deleteBtn = fallbackRow.querySelector('.delete');
+        deleteBtn.addEventListener('click', function(e) {
+          const key = parseInt(e.currentTarget.dataset.key);
+          const removeIndex = dataArray.findIndex(item => item.key === key);
+          if (removeIndex !== -1) {
+            pendingDelete = {
+              row: fallbackRow,
+              index: removeIndex,
+              isFallback: true
+            };
+            $('#deleteConfirmModal').modal('show');
           }
-        })
+        });
+        newTransactions.appendChild(fallbackRow);
+        return;
+      }
+      const deleteBtn = newRow.querySelector('.delete');
+      dataArray.push(transaction);
+      deleteBtn.addEventListener('click', function(e) {
+        const key = parseInt(e.currentTarget.dataset.key);
+        const removeIndex = dataArray.findIndex(item => item.key === key);
+        if (removeIndex !== -1) {
+          pendingDelete = {
+            row: newRow,
+            index: removeIndex,
+            isFallback: false
+          };
+          $('#deleteConfirmModal').modal('show');
+        }
+      });
+      newTransactions.appendChild(newRow);
+    }
 
-        confirm("Are you sure You want to Delete this Transaction?")
+    // Modal event handlers
+    function setupDeleteModalHandlers() {
+      const confirmBtn = document.getElementById('confirmDeleteBtn');
+      const cancelBtn = document.getElementById('cancelDeleteBtn');
+      if (confirmBtn && cancelBtn) {
+        confirmBtn.addEventListener('click', function() {
+          if (pendingDelete) {
+            // Always re-find the row and index in case DOM/data changed
+            const { row } = pendingDelete;
+            // Find the key from the button in the row
+            const deleteBtn = row.querySelector('.delete');
+            if (!deleteBtn) { pendingDelete = null; $('#deleteConfirmModal').modal('hide'); return; }
+            const key = parseInt(deleteBtn.dataset.key);
+            // Find the latest index in dataArray and row in DOM
+            const newTransactions = document.querySelector('.transactions tbody');
+            const rows = Array.from(newTransactions.children);
+            const realRow = rows.find(r => r.querySelector('.delete') && parseInt(r.querySelector('.delete').dataset.key) === key);
+            const index = dataArray.findIndex(item => item.key === key);
+            if (realRow && index !== -1) {
+              realRow.classList.remove('animate__fadeIn');
+              realRow.classList.add('animate__fadeOut');
+              setTimeout(() => {
+                if (realRow.parentNode) realRow.parentNode.removeChild(realRow);
+                dataArray.splice(index, 1);
+                updateTotalsDebit();
+                pendingDelete = null;
+              }, 500);
+            }
+            $('#deleteConfirmModal').modal('hide');
+          }
+        });
+        cancelBtn.addEventListener('click', function() {
+          pendingDelete = null;
+        });
+      }
+    }
 
-        // data array
-       
-
-         // remove from the dom
-        newTransactions.removeChild(newTransactions.children[removeTransaction.index])
-         dataArray.splice(removeTransaction.index, 1)
-        updateTotalsDebit()
-       
-      })//end of remove
-      newTransactions.appendChild(newTransaction);
-       
-   }//END of newTransaction
+    // Ensure modal handlers are set up after DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setupDeleteModalHandlers);
+    } else {
+      setupDeleteModalHandlers();
+    }
 
 /* =========================================================================== */
 
 
 /* ==================================CALCULATION=============================== */
-   function updateTotalsDebit()
-   {
-     const totalDisplayDebit = document.querySelectorAll('.debits');
-     const totalDisplayCredits = document.querySelectorAll('.credits');
-     
-     
-      
-     const calcObject = dataArray.reduce(function(calcObject, transaction)
-      {
-        if(transaction.type === 'debit')
-        {
-           calcObject.totalDebits += parseFloat(transaction.amount)
-           return calcObject
-        }
-        else if(transaction.type === 'credit')
-        {
-          calcObject.totalCredits += parseFloat(transaction.amount)
-          return calcObject
-        }
-       
-
-
-      },{totalDebits:0, totalCredits:0 })
-      totalDisplayDebit[0].textContent = `$${calcObject.totalDebits.toFixed(2)}`
-      totalDisplayCredits[0].textContent = `$${calcObject.totalCredits.toFixed(2)}`
-      
-   }//End of updateTotalsDebit
+    function updateTotalsDebit() {
+        const totalDisplayDebit = document.querySelectorAll('.debits');
+        const totalDisplayCredits = document.querySelectorAll('.credits');
+        const calcObject = dataArray.reduce(function(calcObject, transaction) {
+            if (transaction.type === 'debit') {
+                calcObject.totalDebits += parseFloat(transaction.amount);
+            } else if (transaction.type === 'credit') {
+                calcObject.totalCredits += parseFloat(transaction.amount);
+            }
+            return calcObject;
+        }, { totalDebits: 0, totalCredits: 0 });
+        totalDisplayDebit.forEach(el => el.textContent = `$${calcObject.totalDebits.toFixed(2)}`);
+        totalDisplayCredits.forEach(el => el.textContent = `$${calcObject.totalCredits.toFixed(2)}`);
+    }
 /* =========================================================================== */
 
    //Timer
