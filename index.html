@@ -1,50 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="utf-8"/>
-	<title>Financial Tracker - Assignment 3</title>
-	<link rel="stylesheet" type="text/css" href="css/font-awesome.min.css">
-	<link rel="stylesheet" type="text/css" href="css/main.css">
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/cerulean/bootstrap.min.css" integrity="sha384-3fdgwJw17Bi87e1QQ4fsLn4rUFqWw//KU0g8TvV6quvahISRewev6/EocKNuJmEw" crossorigin="anonymous">
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Transaction Tracker</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+	<link rel="stylesheet" href="css/main.css">
 </head>
 <body>
-	
-	<section class="container py-5">
-		<div id="MyClockDisplay" class="clock mb-4" onload="showTime()"></div>
-		<h1 class="mb-4 text-center">Transaction Tracker</h1>
-		<form class="frm-transactions card shadow-sm mb-4 p-4 bg-light">
-			<h4 class="mb-3">Add Transaction</h4>
-			<div class="alert alert-danger d-none error" role="alert">
-				Fields cannot be empty!
+
+	<main class="app-shell">
+		<header class="app-header">
+			<div class="brand">
+				<span class="brand-mark"><i class="fa-solid fa-chart-line"></i></span>
+				<h1 class="brand-title">Transaction Tracker</h1>
 			</div>
-			<div class="form-row">
-				<div class="form-group col-md-5 mb-3">
-					<input class="form-control" type="text" name="description" placeholder="Description" />
+			<div id="MyClockDisplay" class="clock" aria-label="Current time"></div>
+		</header>
+
+		<section class="kpi-row" aria-label="Summary">
+			<article class="kpi-card kpi-balance">
+				<div class="kpi-icon kpi-icon-brand"><i class="fa-solid fa-wallet"></i></div>
+				<div class="kpi-text">
+					<span class="kpi-label">Balance</span>
+					<span class="kpi-value balance">$0.00</span>
 				</div>
-				<div class="form-group col-md-3 mb-3">
-					<select class="form-control" name="type">
-						<option value="">Type</option>
-						<option value="debit">Debit</option>
-						<option value="credit">Credit</option>
-					</select>
+			</article>
+			<article class="kpi-card">
+				<div class="kpi-icon kpi-icon-success"><i class="fa-solid fa-arrow-trend-up"></i></div>
+				<div class="kpi-text">
+					<span class="kpi-label">Total credits</span>
+					<span class="kpi-value credits">$0.00</span>
 				</div>
-				<div class="form-group col-md-3 mb-3 d-flex align-items-center">
-					<span class="input-group-text bg-white border-0 pr-2"><i class="fa fa-dollar"></i></span>
-					<input class="form-control" type="number" name="currency" min="0" max="9999" step="0.01" placeholder="0.00" />
+			</article>
+			<article class="kpi-card">
+				<div class="kpi-icon kpi-icon-danger"><i class="fa-solid fa-arrow-trend-down"></i></div>
+				<div class="kpi-text">
+					<span class="kpi-label">Total debits</span>
+					<span class="kpi-value debits">$0.00</span>
 				</div>
-				<div class="form-group col-md-1 mb-3">
-					<input class="btn btn-info w-100" type="submit" value="Add" />
-				</div>
+			</article>
+		</section>
+
+		<section class="surface-card form-card">
+			<div class="surface-card-header">
+				<h2 class="surface-card-title">Add transaction</h2>
+				<p class="surface-card-subtitle">Record a new debit or credit.</p>
 			</div>
-		</form>
-		<div class="card shadow-sm">
-			<div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-				<span>Total debits: <span class="badge badge-light total debits">$0.00</span></span>
-				<span>Total credits: <span class="badge badge-light total credits">$0.00</span></span>
+			<form class="frm-transactions" novalidate>
+				<div class="alert alert-danger d-none error" role="alert">
+					<i class="fa-solid fa-circle-exclamation me-2"></i>Please fill in all fields with a valid amount.
+				</div>
+				<div class="row g-3 align-items-end">
+					<div class="col-12 col-md-5">
+						<label class="form-label" for="description-input">Description</label>
+						<input id="description-input" class="form-control" type="text" name="description" placeholder="e.g. Coffee at Tim Horton's" autocomplete="off" />
+					</div>
+					<div class="col-6 col-md-3">
+						<label class="form-label" for="type-input">Type</label>
+						<select id="type-input" class="form-select" name="type">
+							<option value="">Select…</option>
+							<option value="debit">Debit</option>
+							<option value="credit">Credit</option>
+						</select>
+					</div>
+					<div class="col-6 col-md-2">
+						<label class="form-label" for="amount-input">Amount</label>
+						<div class="input-group amount-input-group">
+							<span class="input-group-text">$</span>
+							<input id="amount-input" class="form-control" type="number" name="currency" min="0" max="9999" step="0.01" placeholder="0.00" />
+						</div>
+					</div>
+					<div class="col-12 col-md-2">
+						<button class="btn btn-brand w-100" type="submit"><i class="fa-solid fa-plus me-2"></i>Add</button>
+					</div>
+				</div>
+			</form>
+		</section>
+
+		<section class="surface-card transactions-card">
+			<div class="surface-card-header">
+				<h2 class="surface-card-title">Transactions</h2>
+				<p class="surface-card-subtitle">Newest entries appear at the bottom.</p>
 			</div>
-			<div class="card-body p-0">
-				<table class="table table-hover table-striped table-bordered mb-0 transactions">
-					<thead class="thead-dark">
+			<div class="table-wrap">
+				<table class="table transactions mb-0">
+					<thead>
 						<tr>
 							<th>Description</th>
 							<th>Type</th>
@@ -57,33 +102,50 @@
 					</tbody>
 				</table>
 			</div>
-		</div>
-	</section>
-</section>
+			<div class="empty-state">
+				<div class="empty-state-icon"><i class="fa-regular fa-rectangle-list"></i></div>
+				<h3 class="empty-state-title">No transactions yet</h3>
+				<p class="empty-state-text">Add your first debit or credit using the form above.</p>
+			</div>
+		</section>
+	</main>
 
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteConfirmModal" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
-	<div class="modal-dialog modal-dialog-centered" role="document">
-		<div class="modal-content">
-			<div class="modal-header bg-warning">
-				<h5 class="modal-title" id="deleteConfirmModalLabel"><i class="fa fa-exclamation-triangle text-danger mr-2"></i>Confirm Deletion</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-					<span aria-hidden="true">&times;</span>
-				</button>
-			</div>
-			<div class="modal-body">
-				Are you sure you want to delete this transaction?
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary" id="cancelDeleteBtn" data-dismiss="modal">No</button>
-				<button type="button" class="btn btn-danger" id="confirmDeleteBtn">Yes</button>
+	<!-- Delete Confirmation Modal -->
+	<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="deleteConfirmModalLabel">
+						<i class="fa-solid fa-triangle-exclamation text-danger me-2"></i>Delete transaction?
+					</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					This will permanently remove the transaction from your records. This cannot be undone.
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-light" id="cancelDeleteBtn" data-bs-dismiss="modal">Cancel</button>
+					<button type="button" class="btn btn-danger" id="confirmDeleteBtn"><i class="fa-solid fa-trash me-2"></i>Delete</button>
+				</div>
 			</div>
 		</div>
 	</div>
-</div>
 
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-<script src="js/main.js"></script>
+	<!-- Toast container for idle notice -->
+	<div class="toast-container position-fixed bottom-0 end-0 p-3">
+		<div id="idleToast" class="toast" role="status" aria-live="polite" aria-atomic="true">
+			<div class="toast-header">
+				<i class="fa-regular fa-clock text-muted me-2"></i>
+				<strong class="me-auto">You've been idle</strong>
+				<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+			</div>
+			<div class="toast-body">
+				No activity for a while — your transactions are saved locally and will be here when you return.
+			</div>
+		</div>
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="js/main.js"></script>
 </body>
 </html>

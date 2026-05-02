@@ -1,253 +1,213 @@
-window.addEventListener('load',function(e)
-{
-  setTimer();
-  //SELECTORS
-    const dataArray = [];
-    const form = document.querySelector('form');
-    const error = document.querySelector('.error');
-    
-    // Focus effect for first input
-    const firstInput = form.querySelector('input[name="description"]');
-    firstInput.addEventListener('focus', onFocus);
+window.addEventListener('load', function () {
+	const STORAGE_KEY = 'transactions';
+	const IDLE_MS = 200000;
 
-      //Submit Event
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-      const description = e.currentTarget.elements.description.value.trim();
-      const type = e.currentTarget.elements.type.value;
-      const amount = e.currentTarget.elements.currency.value;
+	const dataArray = [];
+	const form = document.querySelector('form.frm-transactions');
+	const error = document.querySelector('.error');
+	const tbody = document.querySelector('.transactions tbody');
+	const transactionsCard = document.querySelector('.transactions-card');
+	const balanceEl = document.querySelector('.balance');
+	const creditsEl = document.querySelector('.credits');
+	const debitsEl = document.querySelector('.debits');
 
-      //Data Object
-      const transaction = {
-        description,
-        type,
-        amount,
-        key: Date.now()
-      };
+	let pendingDelete = null;
 
-      // Validation
-      if (description !== "" && type !== "" && amount !== "" && amount !== '0' && type !== 'type') {
-        error.classList.add("d-none");
-        newTransaction(transaction);
-        updateTotalsDebit();
-        form.reset();
-      } else {
-        error.classList.remove('d-none');
-        error.classList.add('show');
-      }
-    });
+	const deleteModalEl = document.getElementById('deleteConfirmModal');
+	const deleteModal = bootstrap.Modal.getOrCreateInstance(deleteModalEl);
+	const idleToastEl = document.getElementById('idleToast');
+	const idleToast = bootstrap.Toast.getOrCreateInstance(idleToastEl, { autohide: true, delay: 6000 });
 
+	form.querySelector('input[name="description"]').addEventListener('focus', clearError);
 
-    function onFocus(e) {
-      error.classList.add("d-none");
-      error.classList.remove('show');
-    }
+	form.addEventListener('submit', function (e) {
+		e.preventDefault();
+		const description = form.elements.description.value.trim();
+		const type = form.elements.type.value;
+		const amount = form.elements.currency.value;
 
-    // Add New Transaction To the DOM
-    //Template 
-    // Modal state for delete
-    let pendingDelete = null;
+		if (description === '' || (type !== 'debit' && type !== 'credit') || amount === '' || parseFloat(amount) <= 0) {
+			showError();
+			return;
+		}
 
-    function newTransaction(transaction) {
-      const newTransactions = document.querySelector('.transactions tbody');
-      const template = `
-        <tr class="${transaction.type} animate__animated animate__fadeIn">
-          <td>${transaction.description}</td>
-          <td><span class="badge badge-${transaction.type === 'debit' ? 'danger' : 'success'} text-uppercase">${transaction.type}</span></td>
-          <td class="amount">$${parseFloat(transaction.amount).toFixed(2)}</td>
-          <td class="tools">
-            <button type="button" class="btn btn-sm btn-outline-danger delete" data-key="${transaction.key}" title="Delete"><i class="fa fa-trash-o"></i></button>
-          </td>
-        </tr>
-      `;
-      const docFragment = document.createRange().createContextualFragment(template);
-      const newRow = docFragment.querySelector('tr');
-      if (!newRow) {
-        // Fallback: create row using DOM if template fails
-        const fallbackRow = document.createElement('tr');
-        fallbackRow.className = `${transaction.type} animate__animated animate__fadeIn`;
-        fallbackRow.innerHTML = `
-          <td>${transaction.description}</td>
-          <td><span class="badge badge-${transaction.type === 'debit' ? 'danger' : 'success'} text-uppercase">${transaction.type}</span></td>
-          <td class="amount">$${parseFloat(transaction.amount).toFixed(2)}</td>
-          <td class="tools">
-            <button type="button" class="btn btn-sm btn-outline-danger delete" data-key="${transaction.key}" title="Delete"><i class="fa fa-trash-o"></i></button>
-          </td>
-        `;
-        dataArray.push(transaction);
-        const deleteBtn = fallbackRow.querySelector('.delete');
-        deleteBtn.addEventListener('click', function(e) {
-          const key = parseInt(e.currentTarget.dataset.key);
-          const removeIndex = dataArray.findIndex(item => item.key === key);
-          if (removeIndex !== -1) {
-            pendingDelete = {
-              row: fallbackRow,
-              index: removeIndex,
-              isFallback: true
-            };
-            $('#deleteConfirmModal').modal('show');
-          }
-        });
-        newTransactions.appendChild(fallbackRow);
-        return;
-      }
-      const deleteBtn = newRow.querySelector('.delete');
-      dataArray.push(transaction);
-      deleteBtn.addEventListener('click', function(e) {
-        const key = parseInt(e.currentTarget.dataset.key);
-        const removeIndex = dataArray.findIndex(item => item.key === key);
-        if (removeIndex !== -1) {
-          pendingDelete = {
-            row: newRow,
-            index: removeIndex,
-            isFallback: false
-          };
-          $('#deleteConfirmModal').modal('show');
-        }
-      });
-      newTransactions.appendChild(newRow);
-    }
+		clearError();
 
-    // Modal event handlers
-    function setupDeleteModalHandlers() {
-      const confirmBtn = document.getElementById('confirmDeleteBtn');
-      const cancelBtn = document.getElementById('cancelDeleteBtn');
-      if (confirmBtn && cancelBtn) {
-        confirmBtn.addEventListener('click', function() {
-          if (pendingDelete) {
-            // Always re-find the row and index in case DOM/data changed
-            const { row } = pendingDelete;
-            // Find the key from the button in the row
-            const deleteBtn = row.querySelector('.delete');
-            if (!deleteBtn) { pendingDelete = null; $('#deleteConfirmModal').modal('hide'); return; }
-            const key = parseInt(deleteBtn.dataset.key);
-            // Find the latest index in dataArray and row in DOM
-            const newTransactions = document.querySelector('.transactions tbody');
-            const rows = Array.from(newTransactions.children);
-            const realRow = rows.find(r => r.querySelector('.delete') && parseInt(r.querySelector('.delete').dataset.key) === key);
-            const index = dataArray.findIndex(item => item.key === key);
-            if (realRow && index !== -1) {
-              realRow.classList.remove('animate__fadeIn');
-              realRow.classList.add('animate__fadeOut');
-              setTimeout(() => {
-                if (realRow.parentNode) realRow.parentNode.removeChild(realRow);
-                dataArray.splice(index, 1);
-                updateTotalsDebit();
-                pendingDelete = null;
-              }, 500);
-            }
-            $('#deleteConfirmModal').modal('hide');
-          }
-        });
-        cancelBtn.addEventListener('click', function() {
-          pendingDelete = null;
-        });
-      }
-    }
+		const transaction = {
+			description,
+			type,
+			amount,
+			key: Date.now()
+		};
 
-    // Ensure modal handlers are set up after DOM is ready
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', setupDeleteModalHandlers);
-    } else {
-      setupDeleteModalHandlers();
-    }
+		dataArray.push(transaction);
+		renderTransactionRow(transaction);
+		saveTransactions();
+		updateTotals();
+		updateEmptyState();
+		form.reset();
+	});
 
-/* =========================================================================== */
+	function showError() {
+		error.classList.remove('d-none');
+	}
 
+	function clearError() {
+		error.classList.add('d-none');
+	}
 
-/* ==================================CALCULATION=============================== */
-    function updateTotalsDebit() {
-        const totalDisplayDebit = document.querySelectorAll('.debits');
-        const totalDisplayCredits = document.querySelectorAll('.credits');
-        const calcObject = dataArray.reduce(function(calcObject, transaction) {
-            if (transaction.type === 'debit') {
-                calcObject.totalDebits += parseFloat(transaction.amount);
-            } else if (transaction.type === 'credit') {
-                calcObject.totalCredits += parseFloat(transaction.amount);
-            }
-            return calcObject;
-        }, { totalDebits: 0, totalCredits: 0 });
-        totalDisplayDebit.forEach(el => el.textContent = `$${calcObject.totalDebits.toFixed(2)}`);
-        totalDisplayCredits.forEach(el => el.textContent = `$${calcObject.totalCredits.toFixed(2)}`);
-    }
-/* =========================================================================== */
+	function renderTransactionRow(transaction) {
+		const tr = document.createElement('tr');
+		tr.className = `${transaction.type} animate-fade-in`;
+		tr.dataset.key = String(transaction.key);
+		tr.innerHTML = `
+			<td>${escapeHtml(transaction.description)}</td>
+			<td><span class="type-pill ${transaction.type}">${transaction.type}</span></td>
+			<td class="amount ${transaction.type}-amount">${transaction.type === 'debit' ? '-' : '+'}$${parseFloat(transaction.amount).toFixed(2)}</td>
+			<td class="tools">
+				<button type="button" class="btn-row-delete" data-key="${transaction.key}" title="Delete" aria-label="Delete transaction">
+					<i class="fa-solid fa-trash"></i>
+				</button>
+			</td>
+		`;
 
-   //Timer
-   function setTimer()
-   {
-        let timerSet;
+		tr.querySelector('.btn-row-delete').addEventListener('click', function (e) {
+			const key = parseInt(e.currentTarget.dataset.key, 10);
+			const index = dataArray.findIndex(item => item.key === key);
+			if (index !== -1) {
+				pendingDelete = { row: tr, key };
+				deleteModal.show();
+			}
+		});
 
+		tbody.appendChild(tr);
+	}
 
-        window.onclick = timer;
-        
-        function timer()
-        {
-          clearTimeout(timerSet);
-          timerSet = setTimeout(alertDialog, 200000);//200000
+	function saveTransactions() {
+		try {
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(dataArray));
+		} catch (err) {
+			// localStorage unavailable (private mode, quota) — silently ignore
+		}
+	}
 
-        }
+	function loadTransactions() {
+		let saved = null;
+		try {
+			saved = localStorage.getItem(STORAGE_KEY);
+		} catch (err) {
+			return;
+		}
+		if (!saved) return;
+		try {
+			const parsed = JSON.parse(saved);
+			if (!Array.isArray(parsed)) return;
+			parsed.forEach(t => {
+				if (t && typeof t.description === 'string' && (t.type === 'debit' || t.type === 'credit') && t.amount !== undefined && t.key !== undefined) {
+					dataArray.push(t);
+					renderTransactionRow(t);
+				}
+			});
+		} catch (err) {
+			// Corrupt JSON — ignore and start fresh
+		}
+	}
 
-        function alertDialog()
-        {
-          alert('Page will be refreshed');
-          reloadPage();
-        }
+	function updateTotals() {
+		const totals = dataArray.reduce(function (acc, t) {
+			const value = parseFloat(t.amount) || 0;
+			if (t.type === 'debit') acc.debits += value;
+			else if (t.type === 'credit') acc.credits += value;
+			return acc;
+		}, { debits: 0, credits: 0 });
 
-        function reloadPage()
-        {
-          window.location = self.location.href;
-        }
+		const balance = totals.credits - totals.debits;
 
+		creditsEl.textContent = formatCurrency(totals.credits);
+		debitsEl.textContent = formatCurrency(totals.debits);
+		balanceEl.textContent = formatCurrency(balance);
 
-   }
- 
-    
-  /*=============Template========= */
-  /*
-        <table>
-            <tr class="debit">
-              <td>Tim Horton's</td>
-              <td>debit</td>
-              <td class="amount">$1.89</td>
-              <td class="tools">
-                <i class="delete fa fa-trash-o"></i>
-              </td>
-            </tr>
-        </table> 
-    */
-  /*============================= */
+		balanceEl.classList.toggle('is-positive', balance > 0);
+		balanceEl.classList.toggle('is-negative', balance < 0);
+	}
 
+	function updateEmptyState() {
+		transactionsCard.classList.toggle('is-empty', dataArray.length === 0);
+	}
 
-  //Digital Clock
+	function formatCurrency(n) {
+		const sign = n < 0 ? '-' : '';
+		return `${sign}$${Math.abs(n).toFixed(2)}`;
+	}
 
-  function showTime(){
-    var date = new Date();
-    var h = date.getHours(); // 0 - 23
-    var m = date.getMinutes(); // 0 - 59
-    var s = date.getSeconds(); // 0 - 59
-    var session = "AM";
-    
-    if(h == 0){
-        h = 12;
-    }
-    
-    if(h > 12){
-        h = h - 12;
-        session = "PM";
-    }
-    
-    h = (h < 10) ? "0" + h : h;
-    m = (m < 10) ? "0" + m : m;
-    s = (s < 10) ? "0" + s : s;
-    
-    var time = h + ":" + m + ":" + s + " " + session;
-    document.getElementById("MyClockDisplay").innerText = time;
-    document.getElementById("MyClockDisplay").textContent = time;
-    
-    setTimeout(showTime, 1000);
-    
-}
+	function escapeHtml(str) {
+		return String(str)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
+	}
 
-showTime();
+	// Delete modal handlers
+	document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+		if (!pendingDelete) {
+			deleteModal.hide();
+			return;
+		}
+		const { row, key } = pendingDelete;
+		const index = dataArray.findIndex(item => item.key === key);
+		if (index !== -1 && row && row.parentNode) {
+			row.classList.remove('animate-fade-in');
+			row.classList.add('animate-fade-out');
+			setTimeout(function () {
+				if (row.parentNode) row.parentNode.removeChild(row);
+				dataArray.splice(index, 1);
+				saveTransactions();
+				updateTotals();
+				updateEmptyState();
+			}, 350);
+		}
+		pendingDelete = null;
+		deleteModal.hide();
+	});
 
-})//END OF LOAD
+	document.getElementById('cancelDeleteBtn').addEventListener('click', function () {
+		pendingDelete = null;
+	});
+
+	// Idle timer — show a gentle toast instead of alert + reload
+	let idleTimer;
+	function resetIdleTimer() {
+		clearTimeout(idleTimer);
+		idleTimer = setTimeout(function () {
+			idleToast.show();
+		}, IDLE_MS);
+	}
+	window.addEventListener('click', resetIdleTimer);
+	window.addEventListener('keydown', resetIdleTimer);
+	resetIdleTimer();
+
+	// Clock
+	function showTime() {
+		const date = new Date();
+		let h = date.getHours();
+		let m = date.getMinutes();
+		let s = date.getSeconds();
+		let session = h >= 12 ? 'PM' : 'AM';
+		if (h === 0) h = 12;
+		else if (h > 12) h -= 12;
+		const hh = h < 10 ? '0' + h : h;
+		const mm = m < 10 ? '0' + m : m;
+		const ss = s < 10 ? '0' + s : s;
+		const clockEl = document.getElementById('MyClockDisplay');
+		if (clockEl) clockEl.textContent = `${hh}:${mm}:${ss} ${session}`;
+		setTimeout(showTime, 1000);
+	}
+	showTime();
+
+	// Initial hydration
+	loadTransactions();
+	updateTotals();
+	updateEmptyState();
+});
